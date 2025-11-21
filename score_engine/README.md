@@ -507,14 +507,9 @@ pytest test_score.py -v
 
 ---
 
-## 라이센스
 
-MIT License
-
----
 
 ## 작성자
 
-이승규 (Penguin-Land 프로젝트)
-
-해커톤 화이팅! 🐧🏆
+ 🐧🏆
+이승규 (Penguin-Land 프로젝트) 
