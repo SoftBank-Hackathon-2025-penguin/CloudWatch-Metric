@@ -8,6 +8,8 @@
 ---
 
 ## 📌 나의 역할
+<img width="637" height="443" alt="image" src="https://github.com/user-attachments/assets/83db85b2-87ff-4d68-b8bb-ad88d847a366" />
+
 
 ### 맡은 업무
 ```
