@@ -1,0 +1,28 @@
+spring:
+  application:
+    name: penguin-land-health-score
+
+server:
+  port: 8080
+
+# AWS 설정
+aws:
+  region: ap-northeast-2
+  access-key-id: ${AWS_ACCESS_KEY_ID:}
+  secret-access-key: ${AWS_SECRET_ACCESS_KEY:}
+  cloudwatch:
+    alb-name: app/penguin-land-alb/77a716d3813b8deb
+
+# Slack 설정
+slack:
+  webhook-url: ${SLACK_WEBHOOK_URL:}
+
+# CORS 설정
+cors:
+  allowed-origins: "*"
+
+# 로깅
+logging:
+  level:
+    com.penguin.healthscore: INFO
+    root: INFO
