@@ -23,7 +23,7 @@ echo.
 echo ========================================
 echo.
 
-REM Maven 실행
-mvn spring-boot:run
+REM Gradle 실행
+gradlew.bat bootRun
 
 pause
