@@ -47,13 +47,15 @@ public class MonitoringController {
             "timestamp", Instant.now().toString()
         ));
 
-        response.setAnomaly(Map.of(
-            "healthScore", result.getHealthScore(),
-            "healthState", result.getHealthState(),
-            "penguinAnimation", result.getPenguinAnimation(),
-            "coachMessage", result.getCoachMessage()
-        ));
+        // Anomaly 정보 (문제 메트릭 포함)
+        Map<String, Object> anomalyData = new java.util.HashMap<>();
+        anomalyData.put("healthScore", result.getHealthScore());
+        anomalyData.put("healthState", result.getHealthState());
+        anomalyData.put("penguinAnimation", result.getPenguinAnimation());
+        anomalyData.put("coachMessage", result.getCoachMessage());
+        anomalyData.put("problemMetrics", result.getProblemMetrics());
 
+        response.setAnomaly(anomalyData);
         response.setAlerts(new ArrayList<>());
 
         return ResponseEntity.ok(response);
