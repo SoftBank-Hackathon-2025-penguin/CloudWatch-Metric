@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Penguin-Land Health Demo</title>
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js"></script>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: radial-gradient(circle at 20% 20%, #e0f2fe, #e4e3ff 45%, #f8fafc 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px;
+            color: #0f172a;
+        }
+        .card {
+            width: min(900px, 100%);
+            background: #ffffff;
+            border-radius: 24px;
+            box-shadow: 0 30px 80px rgba(15, 23, 42, 0.12);
+            padding: 28px;
+            border: 1px solid #e2e8f0;
+            overflow: hidden;
+        }
+        .header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .title {
+            font-size: 22px;
+            font-weight: 800;
+            letter-spacing: -0.3px;
+        }
+        .state-badge {
+            padding: 10px 14px;
+            border-radius: 999px;
+            font-weight: 700;
+            font-size: 14px;
+            display: inline-flex;
+            gap: 8px;
+            align-items: center;
+        }
+        .state-healthy { background: #ecfdf3; color: #15803d; }
+        .state-warning { background: #fffbeb; color: #b45309; }
+        .state-danger { background: #fef2f2; color: #b91c1c; }
+
+        .layout {
+            display: grid;
+            grid-template-columns: 280px 1fr;
+            gap: 24px;
+        }
+        @media (max-width: 720px) {
+            .layout { grid-template-columns: 1fr; }
+        }
+
+        .penguin-wrap {
+            position: relative;
+            background: radial-gradient(circle at 50% 40%, rgba(59, 130, 246, 0.12), transparent 55%);
+            border: 1px solid #e2e8f0;
+            border-radius: 20px;
+            padding: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 240px;
+        }
+        .penguin-img {
+            width: 180px;
+            height: 180px;
+            object-fit: contain;
+            filter: drop-shadow(0 12px 20px rgba(0, 0, 0, 0.12));
+        }
+        .penguin-fallback {
+            font-size: 100px;
+            line-height: 1;
+        }
+        .penguin-dance { animation: penguin-dance 0.9s ease-in-out infinite; }
+        @keyframes penguin-dance {
+            0%   { transform: translateX(0); }
+            25%  { transform: translateX(-6px) rotate(-3deg); }
+            50%  { transform: translateX(6px) rotate(3deg); }
+            75%  { transform: translateX(-4px) rotate(-2deg); }
+            100% { transform: translateX(0); }
+        }
+
+        .score-block {
+            display: flex;
+            align-items: baseline;
+            gap: 10px;
+            font-weight: 800;
+            letter-spacing: -0.8px;
+        }
+        .score-number { font-size: 68px; }
+        .score-healthy { color: #16a34a; }
+        .score-warning { color: #d97706; }
+        .score-danger { color: #dc2626; }
+
+        .message {
+            margin: 16px 0 20px;
+            padding: 16px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px dashed #cbd5e1;
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        .metrics {
+            display: grid;
+            grid-template-columns: repeat(3, minmax(0, 1fr));
+            gap: 12px;
+        }
+        .metric {
+            padding: 14px;
+            border-radius: 14px;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+        }
+        .metric-label { font-size: 13px; color: #475569; margin-bottom: 4px; }
+        .metric-value { font-size: 22px; font-weight: 800; color: #0f172a; }
+
+        .controls {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-top: 18px;
+        }
+        .btn {
+            padding: 12px 16px;
+            border-radius: 12px;
+            border: 1px solid #e2e8f0;
+            background: #ffffff;
+            cursor: pointer;
+            font-weight: 700;
+            color: #0f172a;
+            transition: all 0.15s ease;
+        }
+        .btn:hover { transform: translateY(-1px); box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08); }
+        .btn.active { border-color: #6366f1; color: #4338ca; background: #eef2ff; }
+
+        .shake {
+            animation: shake 0.45s ease-in-out;
+        }
+        @keyframes shake {
+            0% { transform: translateX(0); }
+            20% { transform: translateX(-8px); }
+            40% { transform: translateX(8px); }
+            60% { transform: translateX(-6px); }
+            80% { transform: translateX(6px); }
+            100% { transform: translateX(0); }
+        }
+        .flash {
+            animation: flash 0.9s linear infinite;
+        }
+        @keyframes flash {
+            0% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0.35); }
+            70% { box-shadow: 0 0 0 16px rgba(220, 38, 38, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(220, 38, 38, 0); }
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+
+        // 백엔드 API URL
+        const API_BASE_URL = 'http://localhost:8000';
+
+        // 펭귄 이미지 경로
+        const penguinImages = {
+            healthy: "./assets/penguin-healthy.png",
+            warning: "./assets/penguin-warning.png",
+            danger: "./assets/penguin-danger.png"
+        };
+
+        function playFanfare() {
+            const AudioCtx = window.AudioContext || window.webkitAudioContext;
+            if (!AudioCtx) return;
+            const ctx = new AudioCtx();
+            const notes = [880, 1174];
+            notes.forEach((freq, idx) => {
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.value = freq;
+                const start = ctx.currentTime + idx * 0.05;
+                const end = start + 0.45;
+                gain.gain.setValueAtTime(0.08, start);
+                gain.gain.exponentialRampToValueAtTime(0.001, end);
+                osc.connect(gain).connect(ctx.destination);
+                osc.start(start);
+                osc.stop(end);
+            });
+        }
+
+        function App() {
+            const [stateKey, setStateKey] = useState('healthy');
+            const [data, setData] = useState(sampleStates.healthy);
+            const [displayScore, setDisplayScore] = useState(sampleStates.healthy.health_score);
+            const [imgOk, setImgOk] = useState(true);
+            const [shake, setShake] = useState(false);
+            const prevStateRef = useRef('healthy');
+            const scoreFromRef = useRef(displayScore);
+            const animationFrame = useRef(null);
+
+            useEffect(() => {
+                const from = scoreFromRef.current;
+                const to = data.health_score;
+                scoreFromRef.current = to;
+                cancelAnimationFrame(animationFrame.current);
+                const duration = 420;
+                const start = performance.now();
+                const tick = (now) => {
+                    const t = Math.min(1, (now - start) / duration);
+                    const eased = t * (2 - t);
+                    const val = Math.round(from + (to - from) * eased);
+                    setDisplayScore(val);
+                    if (t < 1) animationFrame.current = requestAnimationFrame(tick);
+                };
+                animationFrame.current = requestAnimationFrame(tick);
+                return () => cancelAnimationFrame(animationFrame.current);
+            }, [data.health_score]);
+
+            useEffect(() => {
+                const prev = prevStateRef.current;
+                if (stateKey === 'healthy' && prev !== 'healthy') {
+                    if (window.confetti) {
+                        confetti({ particleCount: 120, spread: 70, origin: { y: 0.7 } });
+                    }
+                    playFanfare();
+                }
+                if (stateKey === 'danger' && prev !== 'danger') {
+                    setShake(true);
+                    const t = setTimeout(() => setShake(false), 600);
+                    return () => clearTimeout(t);
+                } else {
+                    setShake(false);
+                }
+                prevStateRef.current = stateKey;
+            }, [stateKey]);
+
+            const changeState = (key) => {
+                setStateKey(key);
+                setData(sampleStates[key]);
+                setImgOk(true);
+            };
+
+            const badgeClass =
+                stateKey === 'healthy' ? 'state-healthy' :
+                stateKey === 'warning' ? 'state-warning' : 'state-danger';
+
+            const scoreClass =
+                stateKey === 'healthy' ? 'score-healthy' :
+                stateKey === 'warning' ? 'score-warning' : 'score-danger';
+
+            const bgTone =
+                stateKey === 'healthy' ? '#ecfdf3' :
+                stateKey === 'warning' ? '#fffbeb' : '#fef2f2';
+
+            return (
+                <div className={`card ${shake ? 'shake' : ''} ${stateKey === 'danger' ? 'flash' : ''}`}>
+                    <div className="header">
+                        <div className="title">??�� ?�스 모니???�모</div>
+                        <div className={`state-badge ${badgeClass}`}>
+                            {stateKey.toUpperCase()}
+                        </div>
+                    </div>
+
+                    <div className="layout">
+                        <div className="penguin-wrap" style={{ background: bgTone }}>
+                            {imgOk ? (
+                                <img
+                                    src={penguinImages[stateKey]}
+                                    alt={stateKey}
+                                    className={`penguin-img ${stateKey === 'healthy' ? 'penguin-dance' : ''}`}
+                                    onError={() => setImgOk(false)}
+                                />
+                            ) : (
+                                <div className={`penguin-fallback ${stateKey === 'healthy' ? 'penguin-dance' : ''}`}>
+                                    ?��
+                                </div>
+                            )}
+                        </div>
+
+                        <div>
+                            <div className="score-block">
+                                <span className={`score-number ${scoreClass}`}>{displayScore}</span>
+                                <span style={{ fontSize: 18, color: '#475569', fontWeight: 700 }}>/ 100 ??/span>
+                            </div>
+                            <div className="message">
+                                {data.coach_message}
+                            </div>
+                            <div className="metrics">
+                                <div className="metric">
+                                    <div className="metric-label">?�러??/div>
+                                    <div className="metric-value">{data.metrics.error_rate.toFixed(1)}%</div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-label">?�답?�간</div>
+                                    <div className="metric-value">{Math.round(data.metrics.latency)}ms</div>
+                                </div>
+                                <div className="metric">
+                                    <div className="metric-label">CPU</div>
+                                    <div className="metric-value">{Math.round(data.metrics.cpu)}%</div>
+                                </div>
+                            </div>
+
+                            <div className="controls">
+                                {['healthy', 'warning', 'danger'].map((key) => (
+                                    <button
+                                        key={key}
+                                        className={`btn ${stateKey === key ? 'active' : ''}`}
+                                        onClick={() => changeState(key)}
+                                    >
+                                        {key === 'healthy' && 'Healthy (�?+ 컨페??+ ?�운??'}
+                                        {key === 'warning' && 'Warning (걱정)'}
+                                        {key === 'danger' && 'Danger (?�들�?+ 깜빡??'}
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        }
+
+        ReactDOM.createRoot(document.getElementById('root')).render(<App />);
+    </script>
+</body>
+</html>
+
+
