@@ -176,7 +176,12 @@
         const { useState, useEffect, useRef } = React;
 
         // 백엔드 API URL
-        const API_BASE_URL = 'http://localhost:8000';
+        // ⚙️ 여기에 팀원의 API 주소를 입력하세요!
+        const API_BASE_URL = 'http://팀원IP주소:8080';
+        // 예시:
+        // const API_BASE_URL = 'http://192.168.1.100:8080';  // 팀원 로컬
+        // const API_BASE_URL = 'http://ec2-xx-xx-xx-xx.compute.amazonaws.com:8080';  // AWS
+        // const API_BASE_URL = 'https://abc123.ngrok.io';  // ngrok
 
         // 펭귄 이미지 경로
         const penguinImages = {
@@ -207,8 +212,12 @@
 
         function App() {
             const [stateKey, setStateKey] = useState('healthy');
-            const [data, setData] = useState(sampleStates.healthy);
-            const [displayScore, setDisplayScore] = useState(sampleStates.healthy.health_score);
+            const [data, setData] = useState({
+                health_score: 0,
+                coach_message: '로딩 중...',
+                metrics: { error_rate: 0, latency: 0, cpu: 0 }
+            });
+            const [displayScore, setDisplayScore] = useState(0);
             const [imgOk, setImgOk] = useState(true);
             const [shake, setShake] = useState(false);
             const prevStateRef = useRef('healthy');
@@ -251,11 +260,38 @@
                 prevStateRef.current = stateKey;
             }, [stateKey]);
 
-            const changeState = (key) => {
-                setStateKey(key);
-                setData(sampleStates[key]);
-                setImgOk(true);
-            };
+            // 🔥 백엔드 API 연동 (5초마다)
+            useEffect(() => {
+                const fetchData = async () => {
+                    try {
+                        const response = await fetch(`${API_BASE_URL}/monitoring`);
+                        const apiData = await response.json();
+
+                        // API 응답을 state에 맞게 변환
+                        setStateKey(apiData.anomaly.healthState);
+                        setData({
+                            health_score: apiData.anomaly.healthScore,
+                            coach_message: apiData.anomaly.coachMessage,
+                            metrics: {
+                                error_rate: apiData.metrics.errorRate,
+                                latency: apiData.metrics.latency,
+                                cpu: apiData.metrics.cpuUsage
+                            }
+                        });
+
+                    } catch (error) {
+                        console.error('API 호출 실패:', error);
+                    }
+                };
+
+                // 즉시 호출
+                fetchData();
+
+                // 5초마다 호출
+                const interval = setInterval(fetchData, 5000);
+
+                return () => clearInterval(interval);
+            }, []);
 
             const badgeClass =
                 stateKey === 'healthy' ? 'state-healthy' :
