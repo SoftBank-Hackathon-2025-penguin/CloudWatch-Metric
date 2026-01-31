@@ -278,7 +278,6 @@ curl http://localhost:8000/api/health/analyze \
 - 알고리즘 설계 및 최적화 (Hybrid ML 시스템)
 - TDD (Test-Driven Development) 방법론
 - REST API 설계 및 문서화
-- 크로스 언어 구현 (Python → Java 마이그레이션 가이드 작성)
 
 ### System Design
 - 이벤트 기반 아키텍처
