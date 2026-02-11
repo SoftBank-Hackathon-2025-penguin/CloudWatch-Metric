@@ -32,7 +32,6 @@ cd backend
 python main.py
 ```
 
-서버 주소: http://localhost:8000
 
 ### 3. API 테스트
 
